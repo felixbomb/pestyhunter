@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pesty Hunter ADS-B Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <style>
+        #map { height: 900px; }
+    </style>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+</head>
+<body>
+    <div id="map"></div>
+    <script>
+        let map = L.map('map').setView([39.226851, -76.815225], 10);
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+
+        let markers = {};
+
+        function updateMap() {
+            let bounds = map.getBounds();
+            let url = `/api/latest_tracks?min_lat=${bounds.getSouth()}&max_lat=${bounds.getNorth()}&min_lon=${bounds.getWest()}&max_lon=${bounds.getEast()}&t=${Date.now()}`;
+
+            fetch(url, { cache: 'no-store'})
+                .then(response => response.json())
+                .then(tracks => {
+                    console.log('Received tracks:', tracks);
+            
+                    tracks.forEach(track => {
+                        let id = track.icao24;
+                        let latLng = [track.latitude, track.longitude];
+                        let popup = `ICAO24: ${id}<br>Callsign: ${track.callsign}<br>Altitude: ${track.altitude}<br>Velocity: ${track.velocity}`;
+
+                        if (!markers[id]) {
+                            console.log('Adding new marker:', id);
+                            markers[id] = L.marker(latLng).addTo(map).bindPopup(popup);
+                        } else {
+                            console.log('Updating marker:', id);
+                            markers[id].setLatLng(latLng).setPopupContent(popup);
+                        }
+                    });
+
+                    Object.keys(markers).forEach(id => {
+                        if (!tracks.some(track => track.icao24 === id)) {
+                            console.log('Removing marker:', id);
+                            map.removeLayer(markers[id]);
+                            delete markers[id];
+                        }
+                    });
+                })
+                .catch(error => console.error('Error fetching tracks:', error));
+        }
+        map.on('moveend', updateMap);
+        updateMap();
+        setInterval(updateMap, 5000);
+    </script>
+</body>
+</html>

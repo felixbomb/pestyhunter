@@ -1,0 +1,15 @@
+to do:
+backend/frontend
+    add SQLite column for priority
+    automate concentric radii around POI 
+    add SQLite column for heading, have leaflet marker position reflect that
+        if s.truetrack == 60 then rotate marker 60 deg
+    increase frequency of API updates 
+AI
+    decide on backward chaining architecture
+    feed ADS-B data
+    feed out priority predictions (1, 2, 3)
+        start with output to terminal
+        later integrate to leaflet
+    add features?
+    work on predictive tracking
