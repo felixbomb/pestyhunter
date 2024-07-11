@@ -2,6 +2,9 @@ from flask import Flask, jsonify
 import sqlite3
 
 app = Flask(__name__)
+conn=sqlite3.connect('peskyhunter.db')
+cursor=conn.cursor()
+cursor.execute("ALTER TABLE tracks ADD COLUMN priority INTEGER DEFAULT 0")
 
 @app.route('/api/latest_tracks')
 def get_latest_tracks():
@@ -18,20 +21,4 @@ def get_latest_tracks():
         )
     ''')
     
-    tracks = [
-        {
-            "icao24": row[0],
-            "callsign": row[1],
-            "longitude": row[2],
-            "latitude": row[3],
-            "altitude": row[4],
-            "velocity": row[5]
-        }
-        for row in cursor.fetchall()
-    ]
-    
-    conn.close()
-    return jsonify(tracks)
-
-if __name__ == '__main__':
-    app.run(debug=True)
+   

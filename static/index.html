@@ -15,7 +15,7 @@
     <script>
         let map = L.map('map').setView([39.226851, -76.815225], 10);
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
+            maxZoom: 25,
             attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         }).addTo(map);
 
@@ -29,29 +29,43 @@
                 .then(response => response.json())
                 .then(tracks => {
                     console.log('Received tracks:', tracks);
-            
-                    tracks.forEach(track => {
+
+                    let currentTime = Math.floor(Date.now() /1000);
+                    let tenMinutesAgo = currentTime-600;
+                    
+                    // Group tracks by ICAO24 and keep only the most recent entry
+                    let latestTracks = tracks.reduce((acc, track) => {
+                        if (!acc[track.icao24] || acc[track.icao24].timestamp < track.timestamp) {
+                            acc[track.icao24] = track;
+                        }
+                        return acc;
+                    }, {});
+
+                    Object.values(latestTracks).forEach(track => {
                         let id = track.icao24;
                         let latLng = [track.latitude, track.longitude];
-                        let popup = `ICAO24: ${id}<br>Callsign: ${track.callsign}<br>Altitude: ${track.altitude}<br>Velocity: ${track.velocity}`;
-
-                        if (!markers[id]) {
-                            console.log('Adding new marker:', id);
-                            markers[id] = L.marker(latLng).addTo(map).bindPopup(popup);
-                        } else {
-                            console.log('Updating marker:', id);
-                            markers[id].setLatLng(latLng).setPopupContent(popup);
+                        let popup = `ICAO24: ${id}<br>Callsign: ${track.callsign}<br>Altitude: ${track.altitude}<br>Velocity: ${track.velocity}<br>Timestamp: ${new Date(track.timestamp * 1000).toLocaleString()}`;
+                        if(track.timestamp >=tenMinutesAgo) {
+                            if (!markers[id]) {
+                                console.log('Adding new marker:', id);
+                                markers[id] = L.marker(latLng).addTo(map).bindPopup(popup);
+                            } else {
+                                console.log('Updating marker:', id);
+                                markers[id].setLatLng(latLng).setPopupContent(popup);
                         }
+                        }
+                        
                     });
 
                     Object.keys(markers).forEach(id => {
-                        if (!tracks.some(track => track.icao24 === id)) {
+                        if (!latestTracks[id] || latestTracks[id].timestamp < tenMinutesAgo) {
                             console.log('Removing marker:', id);
                             map.removeLayer(markers[id]);
                             delete markers[id];
                         }
                     });
                 })
+        
                 .catch(error => console.error('Error fetching tracks:', error));
         }
         map.on('moveend', updateMap);

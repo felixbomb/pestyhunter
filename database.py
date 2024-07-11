@@ -1,34 +1,40 @@
 import sqlite3
 
 def get_latest_tracks(bbox=None):
-    conn = sqlite3.connect('pestyhunter.db')
+    conn = sqlite3.connect('pestyhunter.db')  
     cursor = conn.cursor()
-    
-    query='''
-        SELECT t1.icao24, t1.callsign, t1.longitude, t1.latitude, t1.altitude, t1.velocity
+
+    if bbox:
+        min_lat, max_lat, min_lon, max_lon = bbox
+        query = """
+        SELECT t1.*
         FROM tracks t1
-        INNER JOIN(
+        JOIN (
+            SELECT icao24, MAX(timestamp) as max_timestamp
+            FROM tracks
+            WHERE latitude BETWEEN ? AND ?
+            AND longitude BETWEEN ? AND ?
+            GROUP BY icao24
+        ) t2 ON t1.icao24 = t2.icao24 AND t1.timestamp = t2.max_timestamp
+        """
+        cursor.execute(query, (min_lat, max_lat, min_lon, max_lon))
+        #selects newest iteration of each icao24 listing
+        print("tracks found within bbox")
+    else:
+        query = """
+        SELECT t1.*
+        FROM tracks t1
+        JOIN (
             SELECT icao24, MAX(timestamp) as max_timestamp
             FROM tracks
             GROUP BY icao24
-            ) t2 ON t1.icao24 AND t1.timestamp = t2.max_timestamp
-    '''
-    params=[]
-    if bbox:
-        query += ' AND latitude BETWEEN ? AND ? and longitude BETWEEN ? and ?'
-        params = [bbox[0], bbox[1], bbox[2], bbox[3]]
-    cursor.execute(query, params)
-    tracks = [
-        {
-            "icao24": row[0],
-            "callsign": row[1],
-            "longitude": row[2],
-            "latitude": row[3],
-            "altitude": row[4],
-            "velocity": row[5]
-        }
-        for row in cursor.fetchall()
-    ]
-    
+        ) t2 ON t1.icao24 = t2.icao24 AND t1.timestamp = t2.max_timestamp
+        """
+        cursor.execute(query)
+        print("tracks found")
+    columns = [column[0] for column in cursor.description]
+    results = [dict(zip(columns, row)) for row in cursor.fetchall()]
+
     conn.close()
-    return tracks
+
+    return results
