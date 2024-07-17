@@ -1,10 +1,7 @@
 to do:
-backend/frontend
-    add SQLite column for priority
-    automate concentric radii around POI 
-    add SQLite column for heading, have leaflet marker position reflect that
-        if s.truetrack == 60 then rotate marker 60 deg
-    increase frequency of API updates 
+backend/frontend 
+    increase frequency of API updates
+    make everything less janky
 AI
     decide on backward chaining architecture
     feed ADS-B data

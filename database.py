@@ -1,5 +1,6 @@
 import sqlite3
 
+    
 def get_latest_tracks(bbox=None):
     conn = sqlite3.connect('pestyhunter.db')  
     cursor = conn.cursor()
