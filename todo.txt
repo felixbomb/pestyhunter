@@ -3,10 +3,11 @@ backend/frontend
     increase frequency of API updates
     make everything less janky
 AI
-    decide on backward chaining architecture
-    feed ADS-B data
-    feed out priority predictions (1, 2, 3)
-        start with output to terminal
-        later integrate to leaflet
-    add features?
+    integrate w/ leaflet map
     work on predictive tracking
+
+
+KNOWN ERRORS:
+track icons don't update when a track's popup is active?
+can't reduce the API refresh rate below 5 seconds
+DEBUG insists its returning hundreds of tracks... yeah sure dude there's like 10 within the bounds

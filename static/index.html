@@ -6,13 +6,15 @@
     <title>Pesty Hunter ADS-B Map</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <style>
-        #map { height: 900px; }
+        #map { height: 100vh; }
     </style>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="/node_modules/leaflet-rotatedmarker/leaflet.rotatedMarker.js"></script>
 </head>
 <body>
     <div id="map"></div>
     <script>
+        
         let map = L.map('map').setView([39.226851, -76.815225], 10);
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 25,
@@ -20,6 +22,14 @@
         }).addTo(map);
 
         let markers = {};
+        var trackIcon = L.Icon.extend({
+            options: {
+                iconUrl: "/static/Track1.png",
+                iconSize:  [15,23],
+                rotationOrigin: 'center',
+                shadowUrl: null
+            }
+        })
         var circle3=L.circle([39.226876513413934, -76.81521777415809], {
             color: 'red',
             fillColor: '#f03',
@@ -48,10 +58,11 @@
                 .then(response => response.json())
                 .then(tracks => {
                     console.log('Received tracks:', tracks);
-
+                    
+                    //logic for keeping data fresh
                     let currentTime = Math.floor(Date.now() /1000);
                     let fiveMinutesAgo = currentTime-300;
-                    
+
                     // Group tracks by ICAO24 and keep only the most recent entry
                     let latestTracks = tracks.reduce((acc, track) => {
                         if (!acc[track.icao24] || acc[track.icao24].timestamp < track.timestamp) {
@@ -59,17 +70,29 @@
                         }
                         return acc;
                     }, {});
-
+                    
                     Object.values(latestTracks).forEach(track => {
+                        //logic for adding heading to leaflet icons
+                        if(track.heading != null){
+                            var markerHeading = track.heading;
+                        }
+                        else{
+                            var markerHeading=0;
+                        }
+
                         let id = track.icao24;
                         let latLng = [track.latitude, track.longitude];
-                        let popup = `ICAO24: ${id}<br>Priority: ${track.priority}<br>Callsign: ${track.callsign}<br>Altitude: ${track.altitude}<br>Velocity: ${track.velocity}<br>Timestamp: ${new Date(track.timestamp * 1000).toLocaleString()}`;
-                        if(track.timestamp >=tenMinutesAgo) {
+                        let popup = `ICAO24: ${id}<br>Priority: ${track.priority}<br>Heading: ${track.heading}<br>Callsign: ${track.callsign}<br>Altitude: ${track.altitude}<br>Velocity: ${track.velocity}<br>Timestamp: ${new Date(track.timestamp * 1000).toLocaleString()}`;
+                        if(track.timestamp >=fiveMinutesAgo) {
                             if (!markers[id]) {
                                 console.log('Adding new marker:', id);
-                                markers[id] = L.marker(latLng).addTo(map).bindPopup(popup);
+                                markers[id] = L.marker(latLng,{
+                                    icon: new trackIcon(),
+                                    rotationAngle: markerHeading
+                                }).addTo(map).bindPopup(popup);
                             } else {
                                 console.log('Updating marker:', id);
+                                markers[id].setRotationAngle(markerHeading);
                                 markers[id].setLatLng(latLng).setPopupContent(popup);
                         }
                         }

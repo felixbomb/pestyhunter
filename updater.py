@@ -3,7 +3,7 @@ import time
 from opensky_api import OpenSkyApi
 import math
 
-def calculate_priority(lat1, lon1, lat2, lon2, airspeed, ):
+def calculate_priority(lat1, lon1, lat2, lon2):
     R = 6371  # Earth's radius in kilometers
 
     lat1_rad = math.radians(lat1)
@@ -29,6 +29,8 @@ def calculate_priority(lat1, lon1, lat2, lon2, airspeed, ):
 def update_tracks(db_path, bbox=None):
     api = OpenSkyApi("felixbaum", "S0ylentOpenSky!")
 #i should probably hide my login details when publishing to my github, but i'll figure that out later
+#attempted to add heading support 3:09PM 7/24/24
+#succeeded 12:09PM 7/25/24
     while True:
         conn = None
         try:
@@ -43,9 +45,9 @@ def update_tracks(db_path, bbox=None):
                 for s in states.states:
                     priority=calculate_priority(39.226876513413934, -76.81521777415809, s.latitude, s.longitude)
                     cursor.execute('''
-                        INSERT INTO tracks (icao24, callsign, longitude, latitude, altitude, velocity, timestamp, priority)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                    ''', (s.icao24, s.callsign, s.longitude, s.latitude, s.baro_altitude, s.velocity, current_time, priority))
+                        INSERT INTO tracks (icao24, callsign, longitude, latitude, altitude, velocity, timestamp, priority, heading)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ''', (s.icao24, s.callsign, s.longitude, s.latitude, s.baro_altitude, s.velocity, current_time, priority, s.true_track))
                     #keeping old tracks w timestamp data so PeskyHunter AI can access historical data later
                 conn.commit()
                 print(f"Updated {len(states.states)} tracks at {current_time}")

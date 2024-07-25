@@ -10,20 +10,20 @@ import seaborn as sns
 import geohash
 
 
-def calc_distance(lat1, lon1):
-    lat2=39.226876513413934
-    lon2=-76.81521777415809
-    R=6731
-    lat1, lon1, lat2, lon2 =map(np.radians, [lat1, lon1, lat2, lon2])
-    dlat=lat2-lat1
-    dlon=lon2-lon1
-    a = np.sin(dlat/2)**2 +np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2)**2
-    c=2*np.arctan2(np.sqrt(a), np.sqrt(1-a))
+#def calc_distance(lat1, lon1):
+#    lat2=39.226876513413934
+#    lon2=-76.81521777415809
+#    R=6731
+#    lat1, lon1, lat2, lon2 =map(np.radians, [lat1, lon1, lat2, lon2])
+#    dlat=lat2-lat1
+#    dlon=lon2-lon1
+#    a = np.sin(dlat/2)**2 +np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2)**2
+ #   c=2*np.arctan2(np.sqrt(a), np.sqrt(1-a))
 
-    return R*c
+#    return R*c
 
-def create_geohash(lat1, lon1):
-    geohash_code = geohash.encode(lat1, lon1, precision=12)
+#def create_geohash(lat1, lon1):
+#    geohash_code = geohash.encode(lat1, lon1, precision=12)
 
 conn = sqlite3.connect('pestyhunter.db')
 #query="""SELECT t1.icao24, t1.latitude, t1.longitude, t1.timestamp, t1.priority, t1.altitude, t1.velocity

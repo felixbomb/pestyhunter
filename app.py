@@ -42,6 +42,11 @@ def index():
         </html>
         """)
 
+@app.route('/node_modules/<path:filename>')
+def node_modules(filename):
+    node_modules_path = os.path.join(os.path.dirname(__file__), 'node_modules')
+    return send_from_directory(node_modules_path, filename)
+
 if __name__ == '__main__':
     app.run(port=5004, debug=True)
     #not sure why, but port 5004 thing fixes an error 403 thing i get
