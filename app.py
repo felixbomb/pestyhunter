@@ -1,9 +1,12 @@
 from flask import Flask, jsonify, send_from_directory, render_template_string, request
 from database import get_latest_tracks
+from pestyhunter_lite import PestyHunterLite
 import os
 import logging
 
 app = Flask(__name__)
+Phunter=PestyHunterLite('pestyhunter.db')
+Phunter.train_model()
 logging.basicConfig(level=logging.DEBUG)
 
 @app.route('/api/latest_tracks')
@@ -20,7 +23,10 @@ def api_latest_tracks():
 
     tracks = get_latest_tracks(bbox)
     app.logger.debug(f"Returning {len(tracks)} tracks")
-    return jsonify(tracks)
+    predictions=Phunter.predict_latest()
+    for track in tracks:
+        track['ai_class'] = int(predictions.get(track['icao24'], 0))
+    return jsonify({"tracks":tracks})
 
 @app.route('/')
 def index():

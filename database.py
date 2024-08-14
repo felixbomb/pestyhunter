@@ -33,6 +33,8 @@ def get_latest_tracks(bbox=None):
         """
         cursor.execute(query)
         print("tracks found")
+    
+
     columns = [column[0] for column in cursor.description]
     results = [dict(zip(columns, row)) for row in cursor.fetchall()]
 

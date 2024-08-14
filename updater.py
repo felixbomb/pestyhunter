@@ -3,7 +3,7 @@ import time
 from opensky_api import OpenSkyApi
 import math
 
-def calculate_priority(lat1, lon1, lat2, lon2):
+def calculate_distance(lat1, lon1, lat2, lon2):
     R = 6371  # Earth's radius in kilometers
 
     lat1_rad = math.radians(lat1)
@@ -18,14 +18,26 @@ def calculate_priority(lat1, lon1, lat2, lon2):
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
 
     distance = R * c
-    if distance < 8:
-        return 3
-    elif distance < 16:
-        return 2
-    elif distance < 32:
-        return 1
-    else:
-        return 0
+    return distance
+def calculate_priority(distance, altitude, vertical_rate, velocity):
+    priority=0
+    if (distance < 8 and velocity > 100 and altitude != None):
+        if (altitude < 5000 and vertical_rate <0.000):
+            priority=3
+        elif(altitude<5000):
+            priority=2
+        elif(altitude <10000):
+            priority=1
+    elif (distance < 16 and altitude!=None):
+        if (altitude < 5000):
+            priority=1
+        elif(altitude <10000):
+            priority=0
+    elif(distance < 32 and altitude!=None):
+        if(vertical_rate >0.000 and altitude > 10000):
+            priority=1
+    return priority
+
 def update_tracks(db_path, bbox=None):
     api = OpenSkyApi("felixbaum", "S0ylentOpenSky!")
 #i should probably hide my login details when publishing to my github, but i'll figure that out later
@@ -43,11 +55,12 @@ def update_tracks(db_path, bbox=None):
             if states is not None and states.states:
                 #weird error handling, if my refresh rate for the updater is too high then OpenSky returns None for states
                 for s in states.states:
-                    priority=calculate_priority(39.226876513413934, -76.81521777415809, s.latitude, s.longitude)
+                    distance=calculate_distance(39.226876513413934, -76.81521777415809, s.latitude, s.longitude)
+                    priority=calculate_priority(distance, s.baro_altitude, s.vertical_rate, s.velocity)
                     cursor.execute('''
-                        INSERT INTO tracks (icao24, callsign, longitude, latitude, altitude, velocity, timestamp, priority, heading)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    ''', (s.icao24, s.callsign, s.longitude, s.latitude, s.baro_altitude, s.velocity, current_time, priority, s.true_track))
+                        INSERT INTO tracks (icao24, callsign, longitude, latitude, altitude, velocity, timestamp, priority, heading, vertical_rate)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ''', (s.icao24, s.callsign, s.longitude, s.latitude, s.baro_altitude, s.velocity, current_time, priority, s.true_track, s.vertical_rate))
                     #keeping old tracks w timestamp data so PeskyHunter AI can access historical data later
                 conn.commit()
                 print(f"Updated {len(states.states)} tracks at {current_time}")
@@ -57,8 +70,8 @@ def update_tracks(db_path, bbox=None):
 
         except sqlite3.Error as e:
             print(f"A database error occurred: {e}")
-        except Exception as e:
-            print(f"An unexpected error occurred: {e}")
+        #except Exception as e:
+        #    print(f"Oops! An unexpected error occurred: {e}")
         finally:
             if conn:
                 conn.close()
