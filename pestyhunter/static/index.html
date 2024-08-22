@@ -1,7 +1,7 @@
 <!--
 Program: index.html
 Author: Felix Baum
-Last Updated: 8/20/24
+Last Updated: 8/21/24
 Description: Formats the appearance, logic, and finer details of the PestyHunter ADS-B map. 
 Notes: Tracks depicted in green were correctly classified by PestyHunter.
 -------------------------------------------------------------------------
@@ -37,8 +37,11 @@ Cont: and add an API Client at https://www.openaip.net/user/api-clients
         };
         //instantiating map
         let map = L.map('map').setView([39.226851, -76.815225], 10);
+
         //IMPORTANT! Enter your OpenAIP clientID below to gain access to OpenAIP VFRmap data
-        var clientId  = 'afb2ddabaa9c3a319eb202a2891b3d67';
+        var clientId  = '';
+
+
         var osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 25,
             attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -125,7 +128,7 @@ Cont: and add an API Client at https://www.openaip.net/user/api-clients
                         }
 
                         if(track.ai_class==track.priority){
-                            var classMatchup = [track.ai_class];
+                            var classMatchup = true;
                         }
                         else{
                             var classMatchup = [track.ai_class, track.priority];

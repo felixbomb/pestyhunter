@@ -1,6 +1,6 @@
 #Program: PestyHunter.py
 #Author: Felix Baum
-#Last Updated: 8/20/24
+#Last Updated: 8/21/24
 #Description: Uses scikit-learn Random Classifier to reverse-engineer priority classification logic established in updater.py
 #Notes: PestyHunter model is trained on old data, and sent newest data from app.py for live testing.
 
@@ -8,6 +8,8 @@ import pandas as pd
 import sqlite3
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.model_selection import train_test_split
+
 
 class PestyHunter:
     def __init__(self, db_path):
@@ -28,8 +30,9 @@ class PestyHunter:
         #train_data is selected from all icao24 listings that are not associated with the most recent timestamp
         train_data=df[df['timestamp']<most_recent_timestamp]
         #PestyHunter is fed lat/lon, velocity, vertical_rate, and altitude as these are the factors used in automatic priority classing in updater.py
-        X_train = train_data[['latitude', 'longitude', 'velocity', 'vertical_rate','altitude']]
-        y_train = train_data['priority']
+        X = train_data[['latitude', 'longitude', 'velocity', 'vertical_rate','altitude']]
+        y = train_data['priority']
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
         scaler = StandardScaler()
         X_train_scaled = scaler.fit_transform(X_train)
         self.model = RandomForestClassifier(n_estimators=100, random_state=42)
@@ -40,10 +43,10 @@ class PestyHunter:
         most_recent_timestamp = df['timestamp'].max()
         #test_data is selected from all icao24 listings that are associated with the most recent timestamp
         test_data=df[df['timestamp'] == most_recent_timestamp]
-        X_test = test_data[['latitude', 'longitude', 'velocity', 'altitude', 'vertical_rate']]
+        X_final = test_data[['latitude', 'longitude', 'velocity', 'altitude', 'vertical_rate']]
         scaler = StandardScaler()
-        X_test_scaled = scaler.fit_transform(X_test)
-        predictions=self.model.predict(X_test_scaled)
+        X_final_scaled = scaler.fit_transform(X_final)
+        predictions=self.model.predict(X_final_scaled)
         prediction_dict = dict(zip(test_data['icao24'], predictions))
         return prediction_dict
     

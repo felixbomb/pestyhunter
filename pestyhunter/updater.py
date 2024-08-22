@@ -52,8 +52,8 @@ def calculate_priority(distance, altitude, vertical_rate, velocity):
 
 def update_tracks(db_path, bbox=None):
     #IMPORTANT! Replace these with your OpenSkyAPI login info to make consistent API calls.
-    yourUsername='felixbaum'
-    yourPassword="S0ylentOpenSky!"
+    yourUsername=''
+    yourPassword=""
     api = OpenSkyApi(yourUsername, yourPassword)
     while True:
         conn = None

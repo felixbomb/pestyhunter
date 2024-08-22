@@ -1,6 +1,6 @@
 #Program: app.py
 #Author: Felix Baum
-#Last Updated: 8/20/24
+#Last Updated: 8/21/24
 #Description: Handles Flask web framework with up-to-date data from other programs
 #Notes: Tracks are stored as a list of dictionaries containing icao24, lat/lon, velocity, acceleration, priority, and vertical rate values.
 #Notes, continued: ai_class is added on with default value 0.
@@ -12,6 +12,7 @@ from pestyhunter import PestyHunter
 import os
 import logging
 
+print("loading...")
 app = Flask(__name__)
 Phunter=PestyHunter('pestyhunter.db')
 Phunter.train_model()
